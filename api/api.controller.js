@@ -1,6 +1,26 @@
 'use strict';
 
 var EntityUser = require('./api.model.js').entityUser;
+const request = require('request');
+
+var token, timestamp;
+
+var getToken = function(authorization) {
+    var options = {
+        uri: 'http://localhost:5999/api/token',
+        method: 'GET'
+    };
+    request(options, function(error, response, body) {
+        if (!error && response.statusCode == 200) {
+            var json = JSON.parse(body);
+            token = json.token;
+	    timestamp = json.timestamp;
+        }
+    });
+}
+
+// Call getToken function and save it into token variable
+getToken();
 
 var displayMainPage = function(req, res, next) {
 	res.status(200).send({ message: 'API entity User for GpcDz challenge' });
