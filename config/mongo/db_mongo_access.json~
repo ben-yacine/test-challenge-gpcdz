@@ -1,0 +1,6 @@
+{
+	"DB_NAME": "smartlydb",
+	"DB_USER": "yacine",
+	"DB_PASSWORD": "XXXX",
+	"DB_HOST": "ds153765.mlab.com:53765"
+}
