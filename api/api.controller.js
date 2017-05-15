@@ -18,8 +18,8 @@ var getToken = function(callback) {
             var json = JSON.parse(body);
             token = json.token;
 	    timestamp = json.timestamp;
-	    callback();
         }
+	callback();
     });
 }
 
@@ -42,14 +42,15 @@ var getUsers = function(callback) {
     });
 }
 
-var checkRequiredAttrs : function(req, res, next) {
+var checkRequiredAttrs = function(req, res, next) {
 
 	var arr = config.createParams.required;
 	var missingRequireParam = false;
 	var error = '';
 
 	for (var i = 0, len = arr.length; i < len; i++) {
-		if (typeof req.body[arr[i]] === 'undefined' || !req.body[arr[i]]) {
+		if (typeof req.body[arr[i]] === 'undefined') {
+
 			missingRequireParam = true;
 			error = 'Missing required params';
 			break;
