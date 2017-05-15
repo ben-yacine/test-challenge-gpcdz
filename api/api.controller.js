@@ -1,6 +1,8 @@
 'use strict';
 
 var EntityUser = require('./api.model.js').entityUser;
+var config = require('../config/config').myConfig;
+
 const request = require('request');
 
 var token, timestamp;
@@ -40,7 +42,28 @@ var getUsers = function(callback) {
     });
 }
 
-var displayMainPage = function(req, res, next) {
+var checkRequiredAttrs : function(req, res, next) {
+
+	var arr = config.createParams.required;
+	var missingRequireParam = false;
+	var error = '';
+
+	for (var i = 0, len = arr.length; i < len; i++) {
+		if (typeof req.body[arr[i]] === 'undefined' || !req.body[arr[i]]) {
+			missingRequireParam = true;
+			error = 'Missing required params';
+			break;
+		}
+	}
+
+	if(missingRequireParam) {
+		req.error = error;
+	}
+	
+	return next();
+}
+
+var displayMainPage = function(req, res) {
 	res.status(200).send({ message: 'API entity User for GpcDz challenge' });
 }
 
@@ -48,18 +71,31 @@ var createEntityUser = function(req, res) {
 
   var entityUser = new EntityUser();
 
-  entityUser.socialMedia = req.body.socialMedia;
-  entityUser.dateCreation = new Date();
-  entityUser.dateUpdate = new Date();
-  entityUser.latitud = 0,
-  entityUser.longitud = 0,
-  entityUser.description = req.body.description;
-  entityUser.type = req.body.type;
+  if(typeof req.error === 'undefined') {
+	  entityUser.socialMedia = req.body.socialMedia;
+	  entityUser.dateCreation = new Date();
+	  entityUser.dateUpdate = new Date();
+	  entityUser.latitud = req.body.latitud,
+	  entityUser.longitud = req.body.longitud,
+	  entityUser.description = (typeof req.body.description == 'undefined') ? '' : req.body.description;
+	  entityUser.type = (typeof req.body.type == 'undefined') ? '' : req.body.type;
 
-  var now = Math.floor(new Date().getTime() / 1000);
+	  var now = Math.floor(new Date().getTime() / 1000);
 
-  if(typeof token == 'undefined' || ((now-(timestamp/1000)) >= TOKEN_TIME_OUT) ) {
-	getToken(function(){
+	  if(typeof token == 'undefined' || ((now-(timestamp/1000)) >= TOKEN_TIME_OUT) ) {
+		getToken(function(){
+			getUsers(function(user){
+				entityUser.createdBy = user;
+				entityUser.save(function(err) {
+				    if (err)
+				      return res.send(err);
+
+				    res.json({ message: 'EntityUser created!', data: entityUser });
+				  });
+			});
+		});
+	  } else {
+		// If token is still valid
 		getUsers(function(user){
 			entityUser.createdBy = user;
 			entityUser.save(function(err) {
@@ -69,18 +105,9 @@ var createEntityUser = function(req, res) {
 			    res.json({ message: 'EntityUser created!', data: entityUser });
 			  });
 		});
-	});
+	  }
   } else {
-	// If token is still valid
-	getUsers(function(user){
-		entityUser.createdBy = user;
-		entityUser.save(function(err) {
-		    if (err)
-		      return res.send(err);
-
-		    res.json({ message: 'EntityUser created!', data: entityUser });
-		  });
-	});
+	res.status(400).send({ message: req.error });
   }
 };
 
@@ -126,6 +153,7 @@ var getEntityUsers = function(req, res) {
 };
 
 module.exports = {
+	checkRequiredAttrs: checkRequiredAttrs,
 	displayMainPage: displayMainPage,
 	createEntityUser: createEntityUser,
 	getEntityUsers: getEntityUsers,

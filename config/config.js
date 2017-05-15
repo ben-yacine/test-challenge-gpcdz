@@ -9,6 +9,23 @@ mongoose.connect(mongo_uri, function(err) {
     if (err) throw err;
 });
 
+var myConfig = {
+	"createParams": {
+		"required": [
+			"socialMedia",
+			"latitud",
+			"longitud"
+		],
+	},
+	"updateParams": {
+		"required": [
+			"latitud",
+			"description"
+		],
+	},
+};
+
 module.exports = {
 	mongoose: mongoose,
+	myConfig: myConfig
 };
