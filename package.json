@@ -1,19 +1,16 @@
 {
-  "name": "test-challenge-gpcdz",
+  "name": "gpcdz",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/ben-yacine/test-challenge-gpcdz.git"
-  },
   "author": "",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/ben-yacine/test-challenge-gpcdz/issues"
-  },
-  "homepage": "https://github.com/ben-yacine/test-challenge-gpcdz#readme"
+  "dependencies": {
+    "body-parser": "^1.17.1",
+    "express": "^4.15.2",
+    "mongoose": "^4.9.9"
+  }
 }
