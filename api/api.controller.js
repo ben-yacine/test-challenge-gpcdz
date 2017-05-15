@@ -4,8 +4,9 @@ var EntityUser = require('./api.model.js').entityUser;
 const request = require('request');
 
 var token, timestamp;
+const TOKEN_TIME_OUT = 600; // (10 second) Time for token to expire
 
-var getToken = function(authorization) {
+var getToken = function(callback) {
     var options = {
         uri: 'http://localhost:5999/api/token',
         method: 'GET'
@@ -15,12 +16,29 @@ var getToken = function(authorization) {
             var json = JSON.parse(body);
             token = json.token;
 	    timestamp = json.timestamp;
+	    callback();
         }
     });
 }
 
-// Call getToken function and save it into token variable
-getToken();
+var getUsers = function(callback) {
+    var options = {
+        uri: 'http://localhost:5999/api/users',
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + token
+        }
+    };
+    request(options, function(error, response, body) {
+        if (!error && response.statusCode == 200) {
+            var users = JSON.parse(body);
+	    // Just for example, we will return the first user when saving EntityUser
+            callback(users[0]);
+        } else {
+            callback({});
+        }
+    });
+}
 
 var displayMainPage = function(req, res, next) {
 	res.status(200).send({ message: 'API entity User for GpcDz challenge' });
@@ -33,18 +51,37 @@ var createEntityUser = function(req, res) {
   entityUser.socialMedia = req.body.socialMedia;
   entityUser.dateCreation = new Date();
   entityUser.dateUpdate = new Date();
-  entityUser.createdBy = {};
   entityUser.latitud = 0,
   entityUser.longitud = 0,
   entityUser.description = req.body.description;
   entityUser.type = req.body.type;
 
-  entityUser.save(function(err) {
-    if (err)
-      return res.send(err);
+  var now = Math.floor(new Date().getTime() / 1000);
 
-    res.json({ message: 'EntityUser created!', data: entityUser });
-  });
+  if(typeof token == 'undefined' || ((now-(timestamp/1000)) >= TOKEN_TIME_OUT) ) {
+	getToken(function(){
+		getUsers(function(user){
+			entityUser.createdBy = user;
+			entityUser.save(function(err) {
+			    if (err)
+			      return res.send(err);
+
+			    res.json({ message: 'EntityUser created!', data: entityUser });
+			  });
+		});
+	});
+  } else {
+	// If token is still valid
+	getUsers(function(user){
+		entityUser.createdBy = user;
+		entityUser.save(function(err) {
+		    if (err)
+		      return res.send(err);
+
+		    res.json({ message: 'EntityUser created!', data: entityUser });
+		  });
+	});
+  }
 };
 
 var updateEntityUser = function(req, res) {
